@@ -1,0 +1,10 @@
+{
+    "name": "cloudron/yourls-oidc-plugin",
+    "description": "Cloudron OpenID Connect login for YOURLS",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "jumbojett/openid-connect-php": "1.0.2"
+    }
+}
