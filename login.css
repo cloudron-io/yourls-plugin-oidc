@@ -1,0 +1,269 @@
+/* colors follow @cloudron/pankow style.css - https://pankow.cloudron.io/ */
+body.login {
+    --oidc-primary: #1a76bf;
+    --oidc-primary-hover: #0d89ec;
+    --oidc-primary-active: #0b7ad1;
+    --oidc-text: #333;
+    --oidc-text-secondary: #666;
+    --oidc-background: #f8f8f8;
+    --oidc-card: white;
+    --oidc-panel: rgba(0, 0, 0, 0.05);
+    --oidc-border: #ddd;
+    --oidc-input-background: white;
+    --oidc-input-border: #ced4da;
+    --oidc-input-border-hover: #495057;
+    --oidc-danger: #ca3636;
+    --oidc-radius: 4px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px 16px;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    color: var(--oidc-text);
+    background: var(--oidc-background);
+}
+
+@media (prefers-color-scheme: dark) {
+    body.login {
+        --oidc-text: #ced4da;
+        --oidc-text-secondary: #859cb2;
+        --oidc-background: black;
+        --oidc-card: #1b1e21;
+        --oidc-panel: rgba(255, 255, 255, 0.05);
+        --oidc-border: #495057;
+        --oidc-input-background: #000;
+        --oidc-input-border: #495057;
+        --oidc-input-border-hover: #ced4da;
+    }
+}
+
+body.login *,
+body.login *::before,
+body.login *::after {
+    box-sizing: border-box;
+}
+
+body.login #wrap {
+    display: flex;
+    width: 100%;
+    max-width: 720px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--oidc-border);
+    border-radius: 8px;
+    background: var(--oidc-card);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+body.login header {
+    display: flex;
+    flex: 0 0 38%;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    background: var(--oidc-panel);
+}
+
+body.login header h1 {
+    float: none;
+    max-width: none;
+    margin: 0;
+}
+
+body.login header h1 a {
+    float: none;
+    display: block;
+    font-size: 0;
+}
+
+body.login #yourls-logo {
+    display: block;
+    width: 100%;
+    max-width: 200px;
+}
+
+body.login main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 40px;
+}
+
+body.login #login {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+body.login #login form {
+    display: flex;
+    flex-direction: column;
+}
+
+body.login #login p {
+    margin: 0 0 16px 0;
+    font-weight: normal;
+}
+
+body.login #login p br {
+    display: none;
+}
+
+body.login .oidc-title {
+    order: -2;
+    margin: 0 0 4px 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--oidc-text);
+}
+
+body.login .oidc-subtitle {
+    order: -2;
+    color: var(--oidc-text-secondary);
+}
+
+body.login #error-message,
+body.login .oidc-error {
+    order: -1;
+    padding: 8px 12px;
+    border-radius: var(--oidc-radius);
+    color: var(--oidc-text);
+    background: var(--oidc-panel);
+}
+
+body.login .oidc-error {
+    color: white;
+    background: var(--oidc-danger);
+}
+
+body.login label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+body.login input.text {
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    font: inherit;
+    color: var(--oidc-text);
+    background: var(--oidc-input-background);
+    border: 1px solid var(--oidc-input-border);
+    border-radius: var(--oidc-radius);
+    transition: border-color 250ms;
+}
+
+body.login input.text:hover {
+    border-color: var(--oidc-input-border-hover);
+}
+
+body.login input.text:focus {
+    margin: 0;
+    border: 1px solid var(--oidc-primary-hover);
+    outline: none;
+}
+
+body.login #oidc-login,
+body.login input.button {
+    display: block;
+    width: 100%;
+    padding: 9px 16px;
+    font: inherit;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    color: white;
+    background: var(--oidc-primary);
+    border: 1px solid var(--oidc-primary);
+    border-radius: var(--oidc-radius);
+    cursor: pointer;
+    transition: background-color 250ms, border-color 250ms;
+}
+
+body.login #oidc-login:hover,
+body.login input.button:hover {
+    background: var(--oidc-primary-hover);
+    border-color: var(--oidc-primary-hover);
+    text-decoration: none;
+}
+
+body.login #oidc-login:active,
+body.login input.button:active {
+    background: var(--oidc-primary-active);
+    border-color: var(--oidc-primary-active);
+}
+
+/* the local login is the fallback, so its submit button is outlined */
+body.login input.button {
+    color: var(--oidc-primary);
+    background: transparent;
+}
+
+body.login input.button:hover,
+body.login input.button:active {
+    color: white;
+}
+
+body.login p.oidc-toggle {
+    text-align: center;
+}
+
+body.login a,
+body.login a:link,
+body.login a:visited {
+    color: var(--oidc-primary);
+}
+
+body.login a#oidc-login {
+    color: white;
+}
+
+body.login #login form.oidc-collapsed > p:not(.oidc):not(#error-message) {
+    display: none;
+}
+
+body.login #footer {
+    margin-top: 16px;
+    color: var(--oidc-text-secondary);
+}
+
+body.login #footer p {
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+}
+
+body.login #footer p a {
+    padding: 0;
+    background: none;
+}
+
+@media (max-width: 600px) {
+    body.login #wrap {
+        flex-direction: column;
+    }
+
+    body.login header {
+        flex-basis: auto;
+        padding: 24px;
+    }
+
+    body.login #yourls-logo {
+        max-width: 140px;
+    }
+
+    body.login main {
+        padding: 24px;
+    }
+}

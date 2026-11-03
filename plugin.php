@@ -3,7 +3,7 @@
 Plugin Name: Cloudron OIDC
 Plugin URI: https://github.com/cloudron-io/yourls-plugin-oidc
 Description: Log in with the Cloudron OpenID Connect provider
-Version: 1.1.0
+Version: 1.2.0
 Author: Cloudron
 */
 
@@ -41,27 +41,60 @@ function oidc_merge_users() {
     }
 }
 
+// yourls_do_action() hands its arguments to callbacks as one array - https://github.com/YOURLS/YOURLS/blob/1.10.6/includes/functions-plugins.php#L242
+function oidc_is_login_context( $args ) {
+    return oidc_enabled() && ( (array) $args )[0] === 'login';
+}
+
+yourls_add_action( 'html_head_meta', 'oidc_login_meta' );
+function oidc_login_meta( $args ) {
+    if( !oidc_is_login_context( $args ) ) return;
+
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1" />' . "\n";
+}
+
+// the login screen has no stylesheet hook, and the Cloudron package denies web access to user/, so the CSS is inlined
+yourls_add_action( 'html_head', 'oidc_login_style' );
+function oidc_login_style( $args ) {
+    if( !oidc_is_login_context( $args ) ) return;
+
+    echo '<style>' . file_get_contents( __DIR__ . '/login.css' );
+    if( oidc_login_failed_locally() ) {
+        echo 'body.login #error-message { color: white; background: var(--oidc-danger); }';
+    } elseif( !isset( $_GET['action'] ) || $_GET['action'] !== 'logout' ) {
+        // core shows "Please log in" on every visit, which reads like an error
+        echo 'body.login #error-message { display: none; }';
+    }
+    echo '</style>' . "\n";
+}
+
+function oidc_login_failed_locally() {
+    return isset( $_REQUEST['username'] ) || isset( $_REQUEST['password'] );
+}
+
 yourls_add_action( 'login_form_top', 'oidc_login_button' );
 function oidc_login_button() {
+    global $oidc_error;
+
     if( !oidc_enabled() ) return;
 
     $name = getenv( 'CLOUDRON_OIDC_PROVIDER_NAME' ) ?: 'Cloudron';
     $url = yourls_admin_url( '?oidc=login' );
-    echo '<style>'
-        . '#login form.oidc-collapsed > p:not(.oidc):not(#error-message) { display: none; }'
-        . '#oidc-login { display: inline-block; padding: 6px 16px; color: #595441; font-weight: bold; background-color: #fff; border: 1px solid #88c0eb; border-radius: 3px; text-decoration: none; }'
-        . '#oidc-login:hover { border-color: #2a85b3; }'
-        . '</style>';
-    echo '<p class="oidc" style="text-align: center;"><a id="oidc-login" class="button" href="' . yourls_esc_url( $url ) . '">'
+    echo '<h2 class="oidc oidc-title">' . yourls_esc_html( yourls__( 'Log in' ) ) . '</h2>';
+    echo '<p class="oidc oidc-subtitle">YOURLS: Your Own URL Shortener</p>';
+    if( $oidc_error ) {
+        echo '<p class="oidc oidc-error">' . yourls_esc_html( yourls_s( 'Login with %s failed. Please try again.', $name ) ) . '</p>';
+    }
+    echo '<p class="oidc"><a id="oidc-login" href="' . yourls_esc_url( $url ) . '">'
         . yourls_esc_html( yourls_s( 'Log in with %s', $name ) ) . '</a></p>';
-    echo '<p class="oidc" style="text-align: center; display: none;"><a id="oidc-local-login" href="#">'
+    echo '<p class="oidc oidc-toggle" style="display: none;"><a id="oidc-local-login" href="#">'
         . yourls_esc_html( yourls__( 'Log in with local account' ) ) . '</a></p>';
 }
 
 // collapse with JS only, so the local form stays usable without JS. stays open after a failed local login
 yourls_add_action( 'login_form_end', 'oidc_collapse_local_login' );
 function oidc_collapse_local_login() {
-    if( !oidc_enabled() || isset( $_REQUEST['username'] ) ) return;
+    if( !oidc_enabled() || oidc_login_failed_locally() ) return;
     ?>
     <script>
     (function () {
@@ -82,7 +115,7 @@ function oidc_collapse_local_login() {
 
 yourls_add_filter( 'is_valid_user', 'oidc_is_valid_user' );
 function oidc_is_valid_user( $valid ) {
-    global $yourls_user_passwords;
+    global $yourls_user_passwords, $oidc_error;
 
     if( $valid || yourls_is_API() || !oidc_enabled() ) return $valid;
     if( !isset( $_GET['oidc'] ) || !in_array( $_GET['oidc'], [ 'login', 'callback' ], true ) ) return $valid;
@@ -93,11 +126,13 @@ function oidc_is_valid_user( $valid ) {
         $user = $oidc->requestUserInfo( 'preferred_username' );
     } catch( Exception $e ) {
         error_log( 'OIDC login failed: ' . $e->getMessage() );
+        $oidc_error = true;
         return $valid;
     }
 
     if( !$user ) {
         error_log( 'OIDC login failed: no preferred_username claim' );
+        $oidc_error = true;
         return $valid;
     }
 
