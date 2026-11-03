@@ -3,7 +3,7 @@
 Plugin Name: Cloudron OIDC
 Plugin URI: https://github.com/cloudron-io/yourls-plugin-oidc
 Description: Log in with the Cloudron OpenID Connect provider
-Version: 1.0.0
+Version: 1.1.0
 Author: Cloudron
 */
 
@@ -41,14 +41,43 @@ function oidc_merge_users() {
     }
 }
 
-yourls_add_action( 'login_form_end', 'oidc_login_button' );
+yourls_add_action( 'login_form_top', 'oidc_login_button' );
 function oidc_login_button() {
     if( !oidc_enabled() ) return;
 
     $name = getenv( 'CLOUDRON_OIDC_PROVIDER_NAME' ) ?: 'Cloudron';
     $url = yourls_admin_url( '?oidc=login' );
-    echo '<p style="text-align: center;"><a id="oidc-login" class="button" href="' . yourls_esc_url( $url ) . '">'
+    echo '<style>'
+        . '#login form.oidc-collapsed > p:not(.oidc):not(#error-message) { display: none; }'
+        . '#oidc-login { display: inline-block; padding: 6px 16px; color: #595441; font-weight: bold; background-color: #fff; border: 1px solid #88c0eb; border-radius: 3px; text-decoration: none; }'
+        . '#oidc-login:hover { border-color: #2a85b3; }'
+        . '</style>';
+    echo '<p class="oidc" style="text-align: center;"><a id="oidc-login" class="button" href="' . yourls_esc_url( $url ) . '">'
         . yourls_esc_html( yourls_s( 'Log in with %s', $name ) ) . '</a></p>';
+    echo '<p class="oidc" style="text-align: center; display: none;"><a id="oidc-local-login" href="#">'
+        . yourls_esc_html( yourls__( 'Log in with local account' ) ) . '</a></p>';
+}
+
+// collapse with JS only, so the local form stays usable without JS. stays open after a failed local login
+yourls_add_action( 'login_form_end', 'oidc_collapse_local_login' );
+function oidc_collapse_local_login() {
+    if( !oidc_enabled() || isset( $_REQUEST['username'] ) ) return;
+    ?>
+    <script>
+    (function () {
+        var form = document.getElementById('oidc-login').closest('form');
+        var toggle = document.getElementById('oidc-local-login');
+        form.classList.add('oidc-collapsed');
+        toggle.parentNode.style.display = '';
+        toggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            form.classList.remove('oidc-collapsed');
+            toggle.parentNode.style.display = 'none';
+            document.getElementById('username').focus();
+        });
+    })();
+    </script>
+    <?php
 }
 
 yourls_add_filter( 'is_valid_user', 'oidc_is_valid_user' );

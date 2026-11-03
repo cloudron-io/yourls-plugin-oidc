@@ -4,7 +4,7 @@ A [YOURLS](https://yourls.org) plugin that adds login with the [Cloudron](https:
 
 ## Features
 
-- Adds a `Log in with <provider>` button below the YOURLS login form. Users defined in `config.php` can still log in with their password.
+- Adds a `Log in with <provider>` button to the YOURLS login form. The local login form is collapsed behind a `Log in with local account` link, so users defined in `config.php` can still log in with their password.
 - The YOURLS username is taken from the `preferred_username` claim.
 - Users that logged in once are stored in the `oidc_users` option. Their auth cookies and API signature tokens keep working without a password entry in `config.php`.
 
