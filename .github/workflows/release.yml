@@ -1,0 +1,82 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        php: ["8.1", "8.2", "8.3", "8.4"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, json
+          tools: composer
+
+      - run: composer validate
+      - run: composer install --no-dev --no-interaction
+      - run: composer audit --no-dev
+      - run: php -l plugin.php
+      - name: Check autoloader
+        run: |
+          php -r 'require "vendor/autoload.php"; exit(class_exists("Jumbojett\\OpenIDConnectClient") ? 0 : 1);'
+
+  release:
+    needs: lint
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: "8.4"
+          tools: composer
+
+      - name: Check tag matches plugin version
+        run: |
+          version=$(sed -n 's/^Version: //p' plugin.php)
+          if [[ "${TAG}" != "v${version}" ]]; then
+              echo "tag ${TAG} does not match plugin.php Version ${version}"
+              exit 1
+          fi
+
+      - name: Extract changelog entry
+        run: |
+          awk -v entry="[${TAG#v}]" '$0 == entry { found=1; next } /^\[/ { found=0 } found && NF' CHANGELOG.md > changelog.md
+          if [[ ! -s changelog.md ]]; then
+              echo "no CHANGELOG.md entry for ${TAG#v}"
+              exit 1
+          fi
+          cat changelog.md
+
+      # YOURLS has no composer integration, so the release zip ships vendor/
+      - name: Build release zip
+        run: |
+          mkdir -p "${RUNNER_TEMP}/yourls-oidc-plugin"
+          git archive HEAD | tar -x -C "${RUNNER_TEMP}/yourls-oidc-plugin"
+          composer install --no-dev --no-interaction --optimize-autoloader --working-dir "${RUNNER_TEMP}/yourls-oidc-plugin"
+          rm -rf "${RUNNER_TEMP}/yourls-oidc-plugin/.github"
+          (cd "${RUNNER_TEMP}" && zip -qr "yourls-oidc-plugin-${TAG}.zip" yourls-oidc-plugin)
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${TAG}" --verify-tag --title "${TAG}" --notes-file changelog.md "${RUNNER_TEMP}/yourls-oidc-plugin-${TAG}.zip"

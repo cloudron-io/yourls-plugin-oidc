@@ -16,6 +16,10 @@ A [YOURLS](https://yourls.org) plugin that adds login with the [Cloudron](https:
 
 ## Installation
 
+Download `yourls-oidc-plugin-<version>.zip` from the [releases](https://github.com/cloudron-io/yourls-plugin-oidc/releases) and extract it into `user/plugins/`. The zip includes the Composer dependencies.
+
+Or from source:
+
 ```bash
 cd user/plugins
 git clone https://github.com/cloudron-io/yourls-plugin-oidc.git yourls-oidc-plugin
